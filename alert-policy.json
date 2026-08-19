@@ -1,0 +1,33 @@
+{
+  "displayName": "check-it-fetch failed execution",
+  "documentation": {
+    "content": "The Check It Cloud Run fetch job (check-it-fetch) had a failed execution in the last hour. Most likely cause: the monthly Check It API token expired - rotate it (use the checkit-key-manager web app, or run rotate-token.ps1). Other causes: Drive folder permissions, or the Check It API being down. Check the execution logs: gcloud logging read \"resource.type=cloud_run_job AND resource.labels.job_name=check-it-fetch\" --limit=30 --freshness=2h --format=\"value(textPayload)\"",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "Cloud Run Job check-it-fetch - failed executions > 0",
+      "conditionThreshold": {
+        "filter": "resource.type = \"cloud_run_job\" AND resource.labels.job_name = \"check-it-fetch\" AND metric.type = \"run.googleapis.com/job/completed_execution_count\" AND metric.labels.result = \"failed\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "3600s",
+            "perSeriesAligner": "ALIGN_SUM",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 0,
+        "duration": "0s",
+        "trigger": { "count": 1 }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "604800s"
+  },
+  "notificationChannels": [
+    "REPLACE_WITH_CHANNEL_NAME"
+  ]
+}

@@ -1,17 +1,11 @@
-# Base R image
-FROM rocker/tidyverse
+# Lean, pinned image. Built ONCE and pushed to Artifact Registry — the Cloud Run
+# Job re-runs it on a schedule, so there is no per-run image build (the thing that
+# made the old Cloud Build pipeline slow and fragile).
+FROM python:3.12-slim
 
-# Set working directory inside the container
 WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY fetch.py .
 
-# r libs 
-RUN R -e "install.packages(c('httr','tidyverse','bigrquery'))" 
-
-# Copy the R script to the container's working directory
-COPY script.R /app/script.R
-
-# Optional: Expose port if your script involves networking
-EXPOSE 8080
-
-# Command to execute when the container starts
-CMD ["Rscript", "/app/script.R"]
+ENTRYPOINT ["python", "/app/fetch.py"]
